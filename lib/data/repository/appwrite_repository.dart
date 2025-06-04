@@ -1,15 +1,15 @@
-// ignore_for_file: unused_field
-
 import 'package:intl/intl.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite_flutter_starter_kit/data/models/log.dart';
 import 'package:appwrite_flutter_starter_kit/data/models/project_info.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// A repository responsible for handling network interactions with the Appwrite server.
-///
-/// It provides a helper method to ping the server.
 class AppwriteRepository {
   static const String pingPath = "/ping";
+  static String appwriteProjectId = dotenv.env['APPWRITE_PROJECT_ID']!;
+  static String appwriteProjectName = dotenv.env['APPWRITE_PROJECT_NAME']!;
+  static String appwritePublicEndpoint =
+      dotenv.env['APPWRITE_PUBLIC_ENDPOINT']!;
 
   final Client _client = Client()
       .setProject(appwriteProjectId)
@@ -23,9 +23,11 @@ class AppwriteRepository {
     _databases = Databases(_client);
   }
 
+  Account get account => _account;
+  Databases get databases => _databases;
+
   static final AppwriteRepository _instance = AppwriteRepository._internal();
 
-  /// Singleton instance getter
   factory AppwriteRepository() => _instance;
 
   ProjectInfo getProjectInfo() {
@@ -36,9 +38,13 @@ class AppwriteRepository {
     );
   }
 
-  /// Pings the Appwrite server and captures the response.
-  ///
-  /// @return [Log] containing request and response details.
+  Future<bool> isUserLoggedIn() {
+    return _account
+        .get()
+        .then((user) => user.$id.isNotEmpty)
+        .catchError((_) => false);
+  }
+
   Future<Log> ping() async {
     try {
       final response = await _client.ping();
@@ -68,6 +74,7 @@ class AppwriteRepository {
         email: email,
         password: password,
       );
+
       return Log(
         date: _getCurrentDate(),
         status: 200,
@@ -86,9 +93,6 @@ class AppwriteRepository {
     }
   }
 
-  /// Retrieves the current date in the format "MMM dd, HH:mm".
-  ///
-  /// @return [String] A formatted date.
   String _getCurrentDate() {
     return DateFormat("MMM dd, HH:mm").format(DateTime.now());
   }

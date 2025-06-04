@@ -87,3 +87,4 @@ fastlane/sign&cert
 *.save
 ._*
 *.bak
+.env
