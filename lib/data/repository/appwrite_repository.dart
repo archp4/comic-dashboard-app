@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'package:intl/intl.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite_flutter_starter_kit/data/models/log.dart';
@@ -8,9 +10,6 @@ import 'package:appwrite_flutter_starter_kit/data/models/project_info.dart';
 /// It provides a helper method to ping the server.
 class AppwriteRepository {
   static const String pingPath = "/ping";
-  static const String appwriteProjectId = String.fromEnvironment('APPWRITE_PROJECT_ID');
-  static const String appwriteProjectName = String.fromEnvironment('APPWRITE_PROJECT_NAME');
-  static const String appwritePublicEndpoint = String.fromEnvironment('APPWRITE_PUBLIC_ENDPOINT');
 
   final Client _client = Client()
       .setProject(appwriteProjectId)
@@ -56,6 +55,31 @@ class AppwriteRepository {
         date: _getCurrentDate(),
         status: error.code ?? 500,
         method: "GET",
+        path: pingPath,
+        response: error.message ?? "Unknown error",
+      );
+    }
+  }
+
+  Future<Log> login({required String email, required String password}) async {
+    try {
+      final response = await _account.create(
+        userId: ID.unique(),
+        email: email,
+        password: password,
+      );
+      return Log(
+        date: _getCurrentDate(),
+        status: 200,
+        method: "GET",
+        path: "/create",
+        response: response.toString(),
+      );
+    } on AppwriteException catch (error) {
+      return Log(
+        date: _getCurrentDate(),
+        status: error.code ?? 500,
+        method: "/create",
         path: pingPath,
         response: error.message ?? "Unknown error",
       );
