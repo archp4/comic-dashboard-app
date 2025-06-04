@@ -67,6 +67,27 @@ class AppwriteRepository {
     }
   }
 
+  Future<Log> logout() async {
+    try {
+      final response = await _account.deleteSession(sessionId: "current");
+      return Log(
+        date: _getCurrentDate(),
+        status: 200,
+        method: "DELETE",
+        path: "/logout",
+        response: response.toString(),
+      );
+    } on AppwriteException catch (error) {
+      return Log(
+        date: _getCurrentDate(),
+        status: error.code ?? 500,
+        method: "DELETE",
+        path: "/logout",
+        response: error.message ?? "Unknown error",
+      );
+    }
+  }
+
   Future<Log> login({required String email, required String password}) async {
     try {
       final response = await _account.create(
@@ -79,14 +100,43 @@ class AppwriteRepository {
         date: _getCurrentDate(),
         status: 200,
         method: "GET",
-        path: "/create",
+        path: "/login",
         response: response.toString(),
       );
     } on AppwriteException catch (error) {
       return Log(
         date: _getCurrentDate(),
         status: error.code ?? 500,
-        method: "/create",
+        method: "/login",
+        path: pingPath,
+        response: error.message ?? "Unknown error",
+      );
+    }
+  }
+
+  Future<Log> createAccount({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _account.create(
+        userId: ID.unique(),
+        email: email,
+        password: password,
+      );
+
+      return Log(
+        date: _getCurrentDate(),
+        status: 200,
+        method: "GET",
+        path: "/register",
+        response: response.toString(),
+      );
+    } on AppwriteException catch (error) {
+      return Log(
+        date: _getCurrentDate(),
+        status: error.code ?? 500,
+        method: "/register",
         path: pingPath,
         response: error.message ?? "Unknown error",
       );

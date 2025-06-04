@@ -1,3 +1,4 @@
+import 'package:appwrite_flutter_starter_kit/data/repository/appwrite_repository.dart';
 import 'package:flutter/material.dart';
 
 class SignUpForm extends StatefulWidget {
@@ -12,6 +13,20 @@ class SignUpForm extends StatefulWidget {
 }
 
 class _SignUpFormState extends State<SignUpForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _formKey.currentState?.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -31,6 +46,17 @@ class _SignUpFormState extends State<SignUpForm> {
             style: Theme.of(context).textTheme.displaySmall,
           ),
           TextFormField(
+            controller: _emailController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              final emailPattern = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+              if (!emailPattern.hasMatch(value)) {
+                return 'Please enter a valid email address';
+              }
+              return null;
+            },
             decoration: InputDecoration(
               labelText: 'Email',
               border: OutlineInputBorder(),
@@ -38,6 +64,16 @@ class _SignUpFormState extends State<SignUpForm> {
             keyboardType: TextInputType.emailAddress,
           ),
           TextFormField(
+            controller: _passwordController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              }
+              if (value.length < 6) {
+                return 'Password must be at least 6 characters';
+              }
+              return null;
+            },
             decoration: InputDecoration(
               labelText: 'Password',
               border: OutlineInputBorder(),
@@ -45,6 +81,16 @@ class _SignUpFormState extends State<SignUpForm> {
             obscureText: true,
           ),
           TextFormField(
+            controller: _confirmPasswordController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please confirm your password';
+              }
+              if (value != _passwordController.text) {
+                return 'Passwords do not match';
+              }
+              return null;
+            },
             decoration: InputDecoration(
               labelText: 'Confirm Password',
               border: OutlineInputBorder(),
@@ -55,8 +101,19 @@ class _SignUpFormState extends State<SignUpForm> {
             style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white),
-            onPressed: () {
-              // Handle login logic here
+            onPressed: () async {
+              if (_formKey.currentState?.validate() ?? false) {
+                final response = await AppwriteRepository().createAccount(
+                  email: _emailController.text,
+                  password: _passwordController.text,
+                );
+
+                if (response.status == 200) {
+                  debugPrint('Registration successful: ${response.response}');
+                } else {
+                  showMessage('Registration failed: ${response.response}');
+                }
+              }
             },
             child: Text('Register'),
           ),
@@ -72,6 +129,12 @@ class _SignUpFormState extends State<SignUpForm> {
           ),
         ],
       ),
+    );
+  }
+
+  void showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }
